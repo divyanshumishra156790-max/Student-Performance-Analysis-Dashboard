@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Science & Analysis Interactive Dashboard</title>
+    <!-- Tailwind CSS for Styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js for Data Visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-100 font-sans antialiased">
+
+    <!-- Navbar -->
+    <nav class="bg-slate-900 text-white p-4 shadow-md">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold tracking-wide text-indigo-400">📊 Data Science & Analysis Portal</h1>
+            <span class="bg-indigo-600 text-xs px-3 py-1 rounded-full uppercase font-semibold">Internship Project</span>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="max-w-7xl mx-auto p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+
+        <!-- Sidebar / Overview -->
+        <div class="md:col-span-1 bg-white p-6 rounded-xl shadow">
+            <h2 class="text-lg font-bold text-gray-800 mb-2">Project Details</h2>
+            <p class="text-sm text-gray-600 mb-4">
+                This project demonstrates <strong>Exploratory Data Analysis (EDA)</strong> and <strong>Predictive Analytics</strong> on Student Performance Metrics.
+            </p>
+            <div class="border-t pt-4 space-y-3">
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-500">Domain:</span>
+                    <span class="font-semibold text-gray-800">Data Science & Analysis</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-500">Tech Stack:</span>
+                    <span class="font-semibold text-gray-800">JavaScript, Chart.js, HTML5</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-500">Total Samples:</span>
+                    <span class="font-semibold text-gray-800" id="total-samples">6</span>
+                </div>
+            </div>
+
+            <!-- Model Simulator Form -->
+            <div class="mt-6 border-t pt-4">
+                <h3 class="text-md font-bold text-gray-800 mb-3">Live Score Predictor (ML Simulator)</h3>
+                <form id="predictForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Daily Study Hours (1-10)</label>
+                        <input type="number" id="studyHours" min="1" max="10" value="5" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-indigo-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Attendance Percentage (%)</label>
+                        <input type="number" id="attendance" min="40" max="100" value="75" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-indigo-500 outline-none">
+                    </div>
+                    <button type="button" onclick="predictScore()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-md font-medium transition">
+                        Predict Final Score
+                    </button>
+                </form>
+
+                <!-- Prediction Output -->
+                <div id="resultBox" class="hidden mt-4 p-3 bg-indigo-50 border border-indigo-200 rounded-md text-center">
+                    <p class="text-xs text-indigo-600 uppercase font-semibold">Predicted Score</p>
+                    <p class="text-2xl font-bold text-indigo-900" id="predictedScore">--</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Dashboard View -->
+        <div class="md:col-span-2 space-y-6">
+
+            <!-- Data Table Section -->
+            <div class="bg-white p-6 rounded-xl shadow">
+                <h2 class="text-lg font-bold text-gray-800 mb-4">Dataset Overview</h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm text-gray-600 border-collapse">
+                        <thead class="bg-gray-100 text-gray-700 uppercase text-xs">
+                            <tr>
+                                <th class="p-3 border-b">Student ID</th>
+                                <th class="p-3 border-b">Study Hours/Day</th>
+                                <th class="p-3 border-b">Attendance (%)</th>
+                                <th class="p-3 border-b">Exam Score (%)</th>
+                                <th class="p-3 border-b">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="datasetTable">
+                            <!-- Populated dynamically by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Chart Section -->
+            <div class="bg-white p-6 rounded-xl shadow">
+                <h2 class="text-lg font-bold text-gray-800 mb-4">Data Visualization: Study Hours vs Score</h2>
+                <div class="relative h-64">
+                    <canvas id="analysisChart"></canvas>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Sample Dataset
+        const dataset = [
+            { id: "STD-101", hours: 2, attendance: 60, score: 45, status: "Fail" },
+            { id: "STD-102", hours: 4, attendance: 70, score: 62, status: "Pass" },
+            { id: "STD-103", hours: 6, attendance: 85, score: 78, status: "Pass" },
+            { id: "STD-104", hours: 8, attendance: 92, score: 91, status: "Pass" },
+            { id: "STD-105", hours: 3, attendance: 65, score: 52, status: "Pass" },
+            { id: "STD-106", hours: 7, attendance: 88, score: 84, status: "Pass" }
+        ];
+
+        // Populate Table
+        const tableBody = document.getElementById('datasetTable');
+        dataset.forEach(row => {
+            const tr = document.createElement('tr');
+            tr.className = "border-b hover:bg-gray-50";
+            tr.innerHTML = `
+                <td class="p-3 font-medium text-gray-900">${row.id}</td>
+                <td class="p-3">${row.hours} hrs</td>
+                <td class="p-3">${row.attendance}%</td>
+                <td class="p-3 font-semibold">${row.score}%</td>
+                <td class="p-3">
+                    <span class="px-2 py-1 text-xs font-semibold rounded ${row.status === 'Pass' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
+                        ${row.status}
+                    </span>
+                </td>
+            `;
+            tableBody.appendChild(tr);
+        });
+
+        // Chart.js Setup
+        const ctx = document.getElementById('analysisChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: dataset.map(d => d.id),
+                datasets: [
+                    {
+                        label: 'Study Hours',
+                        data: dataset.map(d => d.hours),
+                        borderColor: '#6366f1',
+                        backgroundColor: 'rgba(99, 102, 241, 0.2)',
+                        yAxisID: 'y',
+                        tension: 0.3
+                    },
+                    {
+                        label: 'Exam Score (%)',
+                        data: dataset.map(d => d.score),
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                        yAxisID: 'y1',
+                        tension: 0.3
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: { display: true, text: 'Study Hours' }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        title: { display: true, text: 'Score (%)' },
+                        grid: { drawOnChartArea: false }
+                    }
+                }
+            }
+        });
+
+        // Machine Learning Linear Regression Simulation Logic
+        function predictScore() {
+            const hours = parseFloat(document.getElementById('studyHours').value) || 0;
+            const attendance = parseFloat(document.getElementById('attendance').value) || 0;
+
+            // Simplified Mock Linear Model Formula: Score = (Hours * 7.5) + (Attendance * 0.4) + 10
+            let score = (hours * 7.5) + (attendance * 0.4) + 10;
+            if (score > 100) score = 100;
+            if (score < 0) score = 0;
+
+            document.getElementById('predictedScore').innerText = `${score.toFixed(1)}%`;
+            document.getElementById('resultBox').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
